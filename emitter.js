@@ -35,16 +35,9 @@ function getEmitter() {
          * @returns {Object}
          */
         off: function (event, context) {
-            let k = 0;
-            for (let element of eventDispatcher) {
-                if ((element[0] === event || isChildren(element[0], event)) &&
-                    areEqual(element[1], context)) {
-                    eventDispatcher[k] = undefined;
-                }
-                k++;
-            }
-            // Избавляемся от всех этих undefined, создавая новый массив(...
-            eventDispatcher = eventDispatcher.filter(x => x);
+            eventDispatcher = eventDispatcher.filter(x => (x[0] !== event &&
+                !isChildren(x[0], event)) ||
+                !areEqual(x[1], context));
 
             return this;
         },
