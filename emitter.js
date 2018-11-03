@@ -6,7 +6,7 @@
  */
 const isStar = false;
 
-let eventDispatcher = [];
+let eventDispatcher = {};
 
 /**
  * Возвращает новый emitter
@@ -23,7 +23,13 @@ function getEmitter() {
          * @returns {Object}
          */
         on: function (event, context, handler) {
-            eventDispatcher.push([event, context, handler]);
+            if (eventDispatcher[event]) {
+                eventDispatcher[event].push([context, handler]);
+            } else {
+                eventDispatcher[event] = [];
+                eventDispatcher[event].push([context, handler]);
+            }
+
 
             return this;
         },
@@ -35,9 +41,11 @@ function getEmitter() {
          * @returns {Object}
          */
         off: function (event, context) {
-            eventDispatcher = eventDispatcher.filter(x => (x[0] !== event &&
-                !isChildren(x[0], event)) ||
-                !areEqual(x[1], context));
+            for (let key of Object.keys(eventDispatcher)) {
+                if (key === event || isChildren(key, event)) {
+                    eventDispatcher[key] = getRidOfContext(eventDispatcher[key], context);
+                }
+            }
 
             return this;
         },
@@ -87,26 +95,38 @@ function areEqual(object1, object2) {
 }
 
 function tryExecuteBase(event) {
-    const dotIndex = event.indexOf('.');
-    const baseEvent = dotIndex !== -1 ? event.substring(0, dotIndex) : undefined;
+    const baseEvent = event.includes('.') ? event.split('.')[0] : undefined;
     if (baseEvent) {
         tryExecute(baseEvent);
     }
 }
 
 function tryExecute(event) {
-    for (let i = 0; i < eventDispatcher.length; i++) {
-        const current = eventDispatcher[i];
-        if (current[0] === event) {
-            current[2].call(current[1]);
+    for (let key of Object.keys(eventDispatcher)) {
+        const keyValues = eventDispatcher[key];
+        if (key === event) {
+            executeAllFrom(keyValues);
         }
     }
 }
 
 function isChildren(childrenEvent, baseEvent) {
-    return childrenEvent.startsWith(baseEvent + '.');
+    let hasBase = childrenEvent.includes('.');
+
+    return hasBase && childrenEvent.split('.')[0] === baseEvent;
 }
 
+function executeAllFrom(array) {
+    for (let each of Object.values(array)) {
+        each[1].call(each[0]);
+    }
+}
+
+function getRidOfContext(map, context) {
+    return map.filter(x => {
+        return !areEqual(x[0], context);
+    });
+}
 
 module.exports = {
     getEmitter,
