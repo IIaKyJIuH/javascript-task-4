@@ -87,7 +87,8 @@ function areEqual(object1, object2) {
 }
 
 function tryExecuteBase(event) {
-    const baseEvent = event.includes('.') ? event.split('.')[0] : undefined;
+    const dotIndex = event.indexOf('.');
+    const baseEvent = dotIndex !== -1 ? event.substring(0, dotIndex) : undefined;
     if (baseEvent) {
         tryExecute(baseEvent);
     }
