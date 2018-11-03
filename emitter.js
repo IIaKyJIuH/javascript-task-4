@@ -94,7 +94,8 @@ function tryExecuteBase(event) {
 }
 
 function tryExecute(event) {
-    for (let current of eventDispatcher) {
+    for (let i = 0; i < eventDispatcher.length; i++) {
+        const current = eventDispatcher[i];
         if (current[0] === event) {
             current[2].call(current[1]);
         }
