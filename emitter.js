@@ -44,7 +44,7 @@ function getEmitter() {
                 k++;
             }
             // Избавляемся от всех этих undefined, создавая новый массив(...
-            eventDispatcher = eventDispatcher.filter(Boolean);
+            eventDispatcher = eventDispatcher.filter(x => x);
 
             return this;
         },
