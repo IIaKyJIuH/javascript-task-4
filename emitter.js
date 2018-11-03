@@ -103,9 +103,7 @@ function tryExecute(event) {
 }
 
 function isChildren(childrenEvent, baseEvent) {
-    let hasBase = childrenEvent.includes('.');
-
-    return hasBase && childrenEvent.split('.')[0] === baseEvent;
+    return childrenEvent.startsWith(baseEvent + '.');
 }
 
 
