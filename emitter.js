@@ -4,7 +4,9 @@
  * Сделано задание на звездочку
  * Реализованы методы several и through
  */
-const isStar = true;
+const isStar = false;
+
+let eventDispatcher = [];
 
 /**
  * Возвращает новый emitter
@@ -18,26 +20,45 @@ function getEmitter() {
          * @param {String} event
          * @param {Object} context
          * @param {Function} handler
+         * @returns {Object}
          */
         on: function (event, context, handler) {
-            console.info(event, context, handler);
+            eventDispatcher.push([event, context, handler]);
+
+            return this;
         },
 
         /**
          * Отписаться от события
          * @param {String} event
          * @param {Object} context
+         * @returns {Object}
          */
         off: function (event, context) {
-            console.info(event, context);
+            let k = 0;
+            for (let element of eventDispatcher) {
+                if ((element[0] === event || isChildren(element[0], event)) &&
+                    areEqual(element[1], context)) {
+                    eventDispatcher[k] = undefined;
+                }
+                k++;
+            }
+            // Избавляемся от всех этих undefined, создавая новый массив(...
+            eventDispatcher = eventDispatcher.filter(Boolean);
+
+            return this;
         },
 
         /**
          * Уведомить о событии
          * @param {String} event
+         * @returns {Object}
          */
         emit: function (event) {
-            console.info(event);
+            tryExecute(event);
+            tryExecuteBase(event);
+
+            return this;
         },
 
         /**
@@ -65,6 +86,34 @@ function getEmitter() {
         }
     };
 }
+
+function areEqual(object1, object2) {
+
+    return object1.wisdom === object2.wisdom &&
+        object1.focus === object2.focus;
+}
+
+function tryExecuteBase(event) {
+    const baseEvent = event.includes('.') ? event.split('.')[0] : undefined;
+    if (baseEvent) {
+        tryExecute(baseEvent);
+    }
+}
+
+function tryExecute(event) {
+    for (let current of eventDispatcher) {
+        if (current[0] === event) {
+            current[2].call(current[1]);
+        }
+    }
+}
+
+function isChildren(childrenEvent, baseEvent) {
+    let hasBase = childrenEvent.includes('.');
+
+    return hasBase && childrenEvent.split('.')[0] === baseEvent;
+}
+
 
 module.exports = {
     getEmitter,
