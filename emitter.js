@@ -6,8 +6,6 @@
  */
 const isStar = false;
 
-let eventDispatcher = new Map();
-
 class Event {
     constructor(context, handler) {
         this.context = context;
@@ -36,6 +34,8 @@ function getAllEvents(event) {
  * @returns {Object}
  */
 function getEmitter() {
+    let eventDispatcher = new Map();
+
     return {
 
         /**
