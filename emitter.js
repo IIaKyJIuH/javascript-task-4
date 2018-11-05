@@ -20,7 +20,7 @@ function getAllEvents(event) {
     }
     let current = event;
     let lastDot = current.lastIndexOf('.');
-    while (lastDot !== -1) {
+    while (lastDot > -1) {
         current = current.slice(0, lastDot);
         events.push(current);
         lastDot = current.lastIndexOf('.');
@@ -49,8 +49,8 @@ function getEmitter() {
             if (!eventDispatcher.has(event)) {
                 eventDispatcher.set(event, []);
             }
-            let onEvent = new Event(context, handler);
-            eventDispatcher.get(event).push(onEvent);
+            let _event = new Event(context, handler);
+            eventDispatcher.get(event).push(_event);
 
             return this;
         },
@@ -79,10 +79,10 @@ function getEmitter() {
          * @returns {Object}
          */
         emit: function (event) {
-            const allEvents = getAllEvents(event);
-            for (const each of allEvents) {
-                if (eventDispatcher.has(each)) {
-                    eventDispatcher.get(each).forEach(x => {
+            let allEvents = getAllEvents(event);
+            for (let i of allEvents) {
+                if (eventDispatcher.has(i)) {
+                    eventDispatcher.get(i).forEach(x => {
                         x.handler.call(x.context);
                     });
                 }
