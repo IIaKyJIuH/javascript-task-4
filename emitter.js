@@ -6,13 +6,6 @@
  */
 const isStar = false;
 
-class Event {
-    constructor(context, handler) {
-        this.context = context;
-        this.handler = handler;
-    }
-}
-
 function getAllEvents(event) {
     let events = [event];
     if (!event.includes('.')) {
@@ -49,8 +42,8 @@ function getEmitter() {
             if (!eventDispatcher.has(event)) {
                 eventDispatcher.set(event, []);
             }
-            let _event = new Event(context, handler);
-            eventDispatcher.get(event).push(_event);
+            const onPerson = { context: context, handler: handler };
+            eventDispatcher.get(event).push(onPerson);
 
             return this;
         },
@@ -63,8 +56,8 @@ function getEmitter() {
          */
         off: function (event, context) {
             Array.from(eventDispatcher.keys())
-                .filter(x => x.includes(event))
-                .forEach(filtered =>{
+                .filter(x => x.startsWith(event + '.') || x === event)
+                .forEach(filtered => {
                     eventDispatcher.set(filtered, eventDispatcher
                         .get(filtered)
                         .filter(x => x.context !== context));
@@ -79,8 +72,8 @@ function getEmitter() {
          * @returns {Object}
          */
         emit: function (event) {
-            let allEvents = getAllEvents(event);
-            for (let i of allEvents) {
+            const allEvents = getAllEvents(event);
+            for (const i of allEvents) {
                 if (eventDispatcher.has(i)) {
                     eventDispatcher.get(i).forEach(x => {
                         x.handler.call(x.context);
