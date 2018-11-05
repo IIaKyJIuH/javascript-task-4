@@ -49,9 +49,8 @@ function getEmitter() {
             if (!eventDispatcher.has(event)) {
                 eventDispatcher.set(event, []);
             }
-            const onEvent = new Event(context, handler);
-            let eventArray = eventDispatcher.get(event);
-            eventArray.push(onEvent);
+            let onEvent = new Event(context, handler);
+            eventDispatcher.get(event).push(onEvent);
 
             return this;
         },
