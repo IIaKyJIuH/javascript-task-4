@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы several и through
  */
-const isStar = false;
+const isStar = true;
 
 function getAllEvents(event) {
     let events = [event];
@@ -28,6 +28,11 @@ function getAllEvents(event) {
  */
 function getEmitter() {
     let eventDispatcher = new Map();
+    function getObjectByParameters(event, context, handler) {
+        return eventDispatcher
+            .get(event)
+            .filter(x => x.context === context && x.handler === handler)[0];
+    }
 
     return {
 
@@ -42,7 +47,8 @@ function getEmitter() {
             if (!eventDispatcher.has(event)) {
                 eventDispatcher.set(event, []);
             }
-            const onPerson = { context: context, handler: handler };
+            const onPerson = { context: context, handler: handler,
+                repetitions: 0, isActual: () => true };
             eventDispatcher.get(event).push(onPerson);
 
             return this;
@@ -56,11 +62,12 @@ function getEmitter() {
          */
         off: function (event, context) {
             Array.from(eventDispatcher.keys())
-                .filter(x => x.startsWith(event + '.') || x === event)
-                .forEach(filtered => {
-                    eventDispatcher.set(filtered, eventDispatcher
-                        .get(filtered)
-                        .filter(x => x.context !== context));
+                .forEach(x => {
+                    if (x.startsWith(event + '.') || x === event) {
+                        let filteredArray = eventDispatcher.get(x)
+                            .filter(y => y.context !== context);
+                        eventDispatcher.set(x, filteredArray);
+                    }
                 });
 
             return this;
@@ -73,10 +80,13 @@ function getEmitter() {
          */
         emit: function (event) {
             const allEvents = getAllEvents(event);
-            for (const i of allEvents) {
-                if (eventDispatcher.has(i)) {
-                    eventDispatcher.get(i).forEach(x => {
-                        x.handler.call(x.context);
+            for (const each of allEvents) {
+                if (eventDispatcher.has(each)) {
+                    eventDispatcher.get(each).forEach(x => {
+                        if (x.isActual(x.repetitions)) {
+                            x.handler.call(x.context);
+                        }
+                        x.repetitions += 1;
                     });
                 }
             }
@@ -91,9 +101,18 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} times – сколько раз получить уведомление
+         * @returns {Object}
          */
         several: function (event, context, handler, times) {
-            console.info(event, context, handler, times);
+            if (times === 0) {
+                this.on(event, context, handler);
+            } else {
+                this.on(event, context, handler);
+                let obj = getObjectByParameters(event, context, handler);
+                obj.isActual = (repetitions) => repetitions < times;
+            }
+
+            return this;
         },
 
         /**
@@ -103,9 +122,18 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} frequency – как часто уведомлять
+         * @returns {Object}
          */
         through: function (event, context, handler, frequency) {
-            console.info(event, context, handler, frequency);
+            if (frequency === 0) {
+                this.on(event, context, handler);
+            } else {
+                this.on(event, context, handler);
+                let obj = getObjectByParameters(event, context, handler);
+                obj.isActual = (repetitions) => repetitions % frequency === 0;
+            }
+
+            return this;
         }
     };
 }
