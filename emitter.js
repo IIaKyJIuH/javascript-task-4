@@ -6,7 +6,7 @@
  */
 const isStar = false;
 
-let eventDispatcher = {};
+let eventDispatcher = new Map();
 
 /**
  * Возвращает новый emitter
@@ -23,13 +23,12 @@ function getEmitter() {
          * @returns {Object}
          */
         on: function (event, context, handler) {
-            if (eventDispatcher[event]) {
-                eventDispatcher[event].push([context, handler]);
-            } else {
-                eventDispatcher[event] = [];
-                eventDispatcher[event].push([context, handler]);
+            if (!eventDispatcher.has(event)) {
+                eventDispatcher.set(event, []);
             }
-
+            const onEvent = { person: context, action: handler };
+            let eventArray = eventDispatcher.get(event);
+            eventArray.push(onEvent);
 
             return this;
         },
@@ -41,11 +40,13 @@ function getEmitter() {
          * @returns {Object}
          */
         off: function (event, context) {
-            for (let key of Object.keys(eventDispatcher)) {
-                if (key === event || isChildren(key, event)) {
-                    eventDispatcher[key] = getRidOfContext(eventDispatcher[key], context);
-                }
-            }
+            Array.from(eventDispatcher.keys())
+                .filter(x => x.includes(event))
+                .forEach(filtered =>{
+                    eventDispatcher.set(filtered, eventDispatcher
+                        .get(filtered)
+                        .filter(x => x.person !== context));
+                });
 
             return this;
         },
@@ -56,8 +57,14 @@ function getEmitter() {
          * @returns {Object}
          */
         emit: function (event) {
-            tryExecute(event);
-            tryExecuteBase(event);
+            const allEvents = getAllEvents(event);
+            for (const each of allEvents) {
+                if (eventDispatcher.has(each)) {
+                    eventDispatcher.get(each).forEach(x => {
+                        x.action.call(x.person);
+                    });
+                }
+            }
 
             return this;
         },
@@ -88,44 +95,14 @@ function getEmitter() {
     };
 }
 
-function areEqual(object1, object2) {
-
-    return object1.wisdom === object2.wisdom &&
-        object1.focus === object2.focus;
-}
-
-function tryExecuteBase(event) {
-    const baseEvent = event.includes('.') ? event.split('.')[0] : undefined;
-    if (baseEvent) {
-        tryExecute(baseEvent);
+function getAllEvents(event) {
+    const events = [event];
+    if (!event.includes('.')) {
+        return events;
     }
-}
+    events.push(event.split('.')[0]);
 
-function tryExecute(event) {
-    for (let key of Object.keys(eventDispatcher)) {
-        const keyValues = eventDispatcher[key];
-        if (key === event) {
-            executeAllFrom(keyValues);
-        }
-    }
-}
-
-function isChildren(childrenEvent, baseEvent) {
-    let hasBase = childrenEvent.includes('.');
-
-    return hasBase && childrenEvent.split('.')[0] === baseEvent;
-}
-
-function executeAllFrom(array) {
-    for (let each of Object.values(array)) {
-        each[1].call(each[0]);
-    }
-}
-
-function getRidOfContext(map, context) {
-    return map.filter(x => {
-        return !areEqual(x[0], context);
-    });
+    return events;
 }
 
 module.exports = {
