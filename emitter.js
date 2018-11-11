@@ -14,7 +14,7 @@ function getAllEvents(event) {
     let current = event;
     let eventsArray = current.split('.');
     for (let i = 0; i < eventsArray.length - 1; i++) {
-        current = eventsArray[0];
+        current = eventsArray[i];
         events.push(current);
     }
 
