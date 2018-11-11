@@ -12,11 +12,10 @@ function getAllEvents(event) {
         return events;
     }
     let current = event;
-    let lastDot = current.lastIndexOf('.');
-    while (lastDot > -1) {
-        current = current.slice(0, lastDot);
+    let eventsArray = current.split('.');
+    for (let i = 0; i < eventsArray.length - 1; i++) {
+        current = eventsArray[0];
         events.push(current);
-        lastDot = current.lastIndexOf('.');
     }
 
     return events;
@@ -28,7 +27,7 @@ function getAllEvents(event) {
  */
 function getEmitter() {
     let eventDispatcher = new Map();
-    function getObjectByParameters(event, context, handler) {
+    function getRequiredPerson(event, context, handler) {
         return eventDispatcher
             .get(event)
             .filter(x => x.context === context && x.handler === handler)[0];
@@ -47,8 +46,12 @@ function getEmitter() {
             if (!eventDispatcher.has(event)) {
                 eventDispatcher.set(event, []);
             }
-            const onPerson = { context: context, handler: handler,
-                repetitions: 0, isActual: () => true };
+            const onPerson = {
+                context,
+                handler,
+                repetitions: 0,
+                isActual: () => true
+            };
             eventDispatcher.get(event).push(onPerson);
 
             return this;
@@ -62,12 +65,12 @@ function getEmitter() {
          */
         off: function (event, context) {
             Array.from(eventDispatcher.keys())
+                .filter(eventKey => eventKey.startsWith(event + '.') ||
+                eventKey === event)
                 .forEach(x => {
-                    if (x.startsWith(event + '.') || x === event) {
-                        let filteredArray = eventDispatcher.get(x)
-                            .filter(y => y.context !== context);
-                        eventDispatcher.set(x, filteredArray);
-                    }
+                    let filteredArray = eventDispatcher.get(x)
+                        .filter(y => y.context !== context);
+                    eventDispatcher.set(x, filteredArray);
                 });
 
             return this;
@@ -80,13 +83,13 @@ function getEmitter() {
          */
         emit: function (event) {
             const allEvents = getAllEvents(event);
-            for (const each of allEvents) {
-                if (eventDispatcher.has(each)) {
-                    eventDispatcher.get(each).forEach(x => {
-                        if (x.isActual(x.repetitions)) {
-                            x.handler.call(x.context);
+            for (const nextEvent of allEvents) {
+                if (eventDispatcher.has(nextEvent)) {
+                    eventDispatcher.get(nextEvent).forEach(person => {
+                        if (person.isActual(person.repetitions)) {
+                            person.handler.call(person.context);
                         }
-                        x.repetitions += 1;
+                        person.repetitions += 1;
                     });
                 }
             }
@@ -108,7 +111,7 @@ function getEmitter() {
                 this.on(event, context, handler);
             } else {
                 this.on(event, context, handler);
-                let obj = getObjectByParameters(event, context, handler);
+                let obj = getRequiredPerson(event, context, handler);
                 obj.isActual = (repetitions) => repetitions < times;
             }
 
@@ -129,7 +132,7 @@ function getEmitter() {
                 this.on(event, context, handler);
             } else {
                 this.on(event, context, handler);
-                let obj = getObjectByParameters(event, context, handler);
+                let obj = getRequiredPerson(event, context, handler);
                 obj.isActual = (repetitions) => repetitions % frequency === 0;
             }
 
