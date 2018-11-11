@@ -12,10 +12,13 @@ function getAllEvents(event) {
         return events;
     }
     let current = event;
-    let eventsArray = current.split('.');
+    const eventsArray = current.split('.');
+    let previous;
     for (let i = 0; i < eventsArray.length - 1; i++) {
         current = eventsArray[i];
-        events.push(current);
+        let next = previous ? previous + '.' + current : current;
+        previous = current;
+        events.push(next);
     }
 
     return events;
@@ -69,7 +72,7 @@ function getEmitter() {
                 eventKey === event)
                 .forEach(x => {
                     let filteredArray = eventDispatcher.get(x)
-                        .filter(y => y.context !== context);
+                        .filter(person => person.context !== context);
                     eventDispatcher.set(x, filteredArray);
                 });
 
